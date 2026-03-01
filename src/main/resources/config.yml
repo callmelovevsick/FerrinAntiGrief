@@ -1,0 +1,67 @@
+# FerrinAntiGrief Configuration
+
+webhook:
+  enabled: false
+  url: "YOUR_WEBHOOK_API"
+
+protection:
+  nbt:
+    max-serialized-bytes: 15000
+    max-book-pages: 50
+    max-page-length: 400
+    max-depth: 5
+  execute:
+    max-depth: 3
+
+double-confirm:
+  timeout-seconds: 15
+
+audit:
+  log-to-console: true
+  file-name: "admin-audit.log"
+
+# List of commands to obfuscate
+# Grouped for organizational clarity
+obfuscated-commands:
+  - "fill"
+  - "setblock"
+  - "clone"
+  - "summon"
+  - "spreadplayers"
+  - "place"
+  - "particle"
+  - "playsound"
+  - "kill"
+  - "damage"
+  - "effect"
+  - "tp"
+  - "ride"
+  - "attribute"
+  - "gamemode"
+  - "clear"
+  - "item"
+  - "data"
+  - "execute"
+  - "schedule"
+  - "function"
+  - "loot"
+  - "op"
+  - "deop"
+  - "whitelist"
+  - "ban"
+  - "ban-ip"
+  - "pardon"
+  - "stop"
+  - "reload"
+  - "difficulty"
+  - "gamerule"
+  - "give"
+
+# Commands requiring double confirmation (original name)
+confirm-required:
+  - "op"
+  - "deop"
+  - "stop"
+  - "reload"
+  - "whitelist"
+  - "gamerule"

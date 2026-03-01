@@ -1,0 +1,23 @@
+name: FerrinAntiGrief
+version: '${project.version}'
+main: com.ferrin.antigrief.FerrinAntiGrief
+api-version: '1.21'
+authors: [ lovevsick ]
+description: Advanced production-ready anti-grief and command obfuscation system.
+commands:
+  ferrinreload:
+    description: Reload the plugin and regenerate aliases.
+    permission: ferrin.admin.reload
+permissions:
+  ferrin.admin.reload:
+    description: Allows reloading the plugin.
+    default: op
+  ferrin.bypass.nbt:
+    description: Bypass NBT restrictions.
+    default: op
+  ferrin.bypass.execute:
+    description: Bypass execute loop detection.
+    default: op
+  ferrin.audit.view:
+    description: Receive audit logs in-game.
+    default: op
