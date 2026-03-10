@@ -1,43 +1,53 @@
 package com.ferrin.antigrief.webhook;
 
 import com.ferrin.antigrief.FerrinAntiGrief;
-
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
+import org.bukkit.Bukkit;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.Map;
 
 public class DiscordWebhook {
 
     private final FerrinAntiGrief plugin;
-    private final HttpClient client = HttpClient.newHttpClient();
 
     public DiscordWebhook(FerrinAntiGrief plugin) {
         this.plugin = plugin;
     }
 
+    // Method quan trọng để fix lỗi biên dịch
+    public void sendSimpleAlert(String title, String description) {
+        String url = plugin.getConfig().getString("discord.webhook-url");
+        if (url == null || url.isEmpty() || url.equals("YOUR_WEBHOOK_HERE")) return;
+
+        String json = "{\"embeds\": [{\"title\": \"" + title + "\", \"description\": \"" + description + "\", \"color\": 16711680}]}";
+        sendAsync(url, json);
+    }
+
     public void sendUpdate(Map<String, String> mappings) {
-        if (!plugin.getConfig().getBoolean("webhook.enabled")) return;
+        // Code gửi danh sách alias (tùy chọn)
+        sendSimpleAlert("Alias Rotation", "Hệ thống vừa cập nhật danh sách lệnh giả mới.");
+    }
 
-        String url = plugin.getConfig().getString("webhook.url");
-        if (url == null || url.isEmpty()) return;
+    private void sendAsync(String webhookUrl, String jsonPayload) {
+        Bukkit.getScheduler().runTaskAsynchronously(plugin, () -> {
+            try {
+                URL url = new URL(webhookUrl);
+                HttpURLConnection con = (HttpURLConnection) url.openConnection();
+                con.setRequestMethod("POST");
+                con.setRequestProperty("Content-Type", "application/json");
+                con.setDoOutput(true);
 
-        StringBuilder content = new StringBuilder("**FerrinAntiGrief Aliases Updated**\\n\\n");
-        mappings.forEach((k, v) -> content.append("`").append(k).append("` -> `").append(v).append("`\\n"));
-
-        String json = "{\"content\": \"" + content.toString() + "\"}";
-
-        HttpRequest request = HttpRequest.newBuilder()
-                .uri(URI.create(url))
-                .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(json))
-                .build();
-
-        client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                .exceptionally(ex -> {
-                    plugin.getLogger().warning("Webhook failed: " + ex.getMessage());
-                    return null;
-                });
+                try (OutputStream os = con.getOutputStream()) {
+                    byte[] input = jsonPayload.getBytes(StandardCharsets.UTF_8);
+                    os.write(input, 0, input.length);
+                }
+                con.getResponseCode();
+                con.disconnect();
+            } catch (Exception e) {
+                plugin.getLogger().warning("Không thể gửi thông báo đến Discord: " + e.getMessage());
+            }
+        });
     }
 }

@@ -65,3 +65,47 @@ confirm-required:
   - "reload"
   - "whitelist"
   - "gamerule"
+
+risk-system:
+  enabled: true
+  alert-threshold: 50
+  restrict-threshold: 70
+  auto-ban-threshold: 90
+  ban-duration-minutes: 60
+
+entity-lag-detector:
+  enabled: true
+  max-entities-per-chunk: 200
+  auto-clean: true
+  scan-interval-seconds: 60
+
+command-spam:
+  enabled: true
+  max-per-5s: 10
+  rate-limit-per-second: 5
+
+redstone-protection:
+  enabled: true
+  max-toggles-per-second: 40
+
+dupe-detector:
+  enabled: true
+  item-spike-threshold: 150
+
+honeytrap:
+  enabled: true
+  commands:
+    - "minecraft:op"
+    - "bukkit:plugins"
+    - "ver"
+    - "about"
+
+lockdown:
+  enabled: false
+  freeze-players: true
+  block-dangerous-commands: true
+
+alias-mutation:
+  enabled: true
+  rotate-hours: 12
+  rotate-on-attack: true

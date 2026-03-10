@@ -16,57 +16,60 @@ public class CommandListener implements Listener {
         this.plugin = plugin;
     }
 
-    @EventHandler(priority = EventPriority.HIGHEST, ignoreCancelled = true)
-    public void onCommand(PlayerCommandPreprocessEvent event) {
+    @EventHandler(priority = EventPriority.LOWEST)
+    public void onCommandPreProcess(PlayerCommandPreprocessEvent event) {
         Player player = event.getPlayer();
-        String message = event.getMessage().substring(1); 
+        String message = event.getMessage().substring(1);
         String[] args = message.split(" ");
         String root = args[0].toLowerCase();
 
-        if (plugin.getAliasManager().isProtected(root)) {
+        // 1. Rate Limit & Spam
+        if (plugin.getCommandMonitor().isSpamming(player)) {
             event.setCancelled(true);
-            plugin.getAuditLogger().log(player, message, "BLOCKED (ORIGINAL)");
-            player.sendMessage(ColorUtil.colorize("&cUnknown command. Proteced by lovevsick"));
+            player.sendMessage(ColorUtil.colorize("&cPlease slow down!"));
             return;
         }
 
+        // 2. Honeytrap check
+        if (plugin.getCommandMonitor().checkHoneytrap(player, root)) {
+            event.setCancelled(true);
+            return;
+        }
+
+        // 3. Lockdown check
+        if (plugin.getLockdownManager().shouldBlockCommand(root) && !player.hasPermission("ferrin.admin.lockdown")) {
+            event.setCancelled(true);
+            player.sendMessage(ColorUtil.colorize("&4&l[!] Server is in Lockdown mode."));
+            return;
+        }
+
+        // 4. Alias Handling
         if (plugin.getAliasManager().isAlias(root)) {
             String original = plugin.getAliasManager().getOriginal(root);
-            
             if (!player.hasPermission("ferrin.use.alias." + original)) {
                 event.setCancelled(true);
-                player.sendMessage(ColorUtil.colorize("&cYou do not have permission to use this command."));
+                player.sendMessage(ColorUtil.colorize("&cNo permission."));
                 return;
             }
 
-            if (!player.hasPermission("ferrin.bypass.execute") && plugin.getExecuteProtector().isRecursive(message)) {
-                event.setCancelled(true);
-                plugin.getAuditLogger().log(player, message, "BLOCKED (EXECUTE_LOOP)");
-                player.sendMessage(ColorUtil.colorize("&cRecursive execute commands are forbidden."));
-                return;
-            }
-
+            // Double Confirm
             if (plugin.getConfirmManager().needsConfirmation(original)) {
                 if (!plugin.getConfirmManager().isConfirmed(player, message)) {
                     event.setCancelled(true);
                     plugin.getConfirmManager().addPending(player, message);
-                    plugin.getAuditLogger().log(player, message, "DOUBLE_CONFIRM_REQUIRED");
-                    player.sendMessage(ColorUtil.colorize("&6[Warning] &eThis is a sensitive command."));
-                    player.sendMessage(ColorUtil.colorize("&eType &b/" + root + " " + (message.contains(" ") ? message.substring(message.indexOf(" ") + 1) : "") + " confirm &eto proceed."));
+                    player.sendMessage(ColorUtil.colorize("&6Confirm by typing: &b/" + root + " confirm"));
                     return;
                 }
             }
 
-            if (!player.hasPermission("ferrin.bypass.nbt") && (original.equals("give") || original.equals("item") || original.equals("data"))) {
-                if (message.length() > 500) { 
-                     
-                }
-            }
-
+            // Dispatch Original
             event.setCancelled(true);
             String realCmd = original + (message.contains(" ") ? message.substring(message.indexOf(" ")) : "");
             plugin.getServer().dispatchCommand(player, realCmd.replace(" confirm", ""));
-            plugin.getAuditLogger().log(player, message, "SUCCESS");
+        } else if (plugin.getAliasManager().isProtected(root)) {
+            // Block direct original command access
+            event.setCancelled(true);
+            player.sendMessage(ColorUtil.colorize("&cUnknown command."));
         }
     }
 }
